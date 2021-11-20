@@ -1,44 +1,47 @@
-import sys, re
 from mrjob.job import MRJob
 from mrjob.step import MRStep
+import sys
 
 class PageRank(MRJob):
     c = 0.15
     nIt = 2
     nodesInstances = {}
 
-    # Lecture du fichier et identification des couples source -> destination
-    # Ajouts des noeuds au dictionnaire des instances de noeuds
-    def nodesInit(self,_, line):
+    # Data extraction from the file
+    def nodeInit(self,_, line):
         lineSplit = line.split('\t',maxsplit=1)
-        is_quoted_by,node = lineSplit
-        PageRank.nodesInstances[node] = {'rank':0,'AdjacencyList':set()}
-        PageRank.nodesInstances[is_quoted_by] = {'rank':0,'AdjacencyList':set()}
-        yield node, is_quoted_by
+        node, nextNode = lineSplit
+        PageRank.nodesInstances[node] = 1
+        PageRank.nodesInstances[nextNode] = 1
+        yield node, nextNode
 
-    def rankInit(self, node, AdjacencyList):
-        tmp = set(AdjacencyList)
-        PageRank.nodesInstances[node]['rank'] = 1/len(PageRank.nodesInstances)
-        PageRank.nodesInstances[node]['AdjacencyList'] = tmp
-        for neighbour in tmp:
-            PageRank.nodesInstances[neighbour]['rank'] = 1/len(PageRank.nodesInstances)
-        yield node, None
+    # Nodes rank initialized as 1/N
+    def rankInit(self, nodeId, AdjacencyList):
+        node = {'rank':1/len(PageRank.nodesInstances),'AdjacencyList':list(AdjacencyList)}
+        yield nodeId, node
 
-    def rankUpdate(self, node, _):
-        new_rank = 0
-        for neighbour in PageRank.nodesInstances[node]['AdjacencyList']:
-                new_rank += (1-PageRank.c)*PageRank.nodesInstances[neighbour]['rank']
+    #### One iteration of rank update ####
+    def mapper(self, nodeId, node):
+        yield nodeId, ('node',node)
+        contribution = node['rank']/len(node['AdjacencyList']) # Node contribution
+        for neighbourId in node['AdjacencyList']:
+            yield neighbourId, ('contribution',contribution) # Pass contribution to neighbours
 
-        PageRank.nodesInstances[node]['rank'] = \
-            PageRank.c*PageRank.nodesInstances[node]['rank'] + \
-            new_rank/len(PageRank.nodesInstances[node]['AdjacencyList'])
-
-        yield node, PageRank.nodesInstances[node]['rank']
-
+    def reducer(self, nodeId, values):
+        contributions = 0
+        for value in values:
+            if value[0]=='node':
+                node = value[1]
+            else:
+                contributions+=value[1]
+        
+        node['rank'] += contributions
+        yield nodeId, node
+    #### End of iteration ####
 
     def steps(self):
-        return [MRStep(mapper=self.nodesInit,reducer=self.rankInit)] +\
-            PageRank.nIt * [MRStep(mapper=self.rankUpdate)]
+        return [MRStep(mapper=self.nodeInit, reducer=self.rankInit)] +\
+        PageRank.nIt * [MRStep(mapper=self.mapper, reducer=self.reducer)]
 
 if __name__ == '__main__':
     #./main.py file_path
