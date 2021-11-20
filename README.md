@@ -1,2 +1,2 @@
 # pagerank
-An pagerank implementation with MRJob.
+A pagerank implementation with MRJob.
