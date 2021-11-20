@@ -8,25 +8,20 @@ class PageRank(MRJob):
     nodesInstances = {}
 
     # Lecture du fichier et identification des couples source -> destination
-    def mapper1(self,_, line):
+    # Ajouts des noeuds au dictionnaire des instances de noeuds
+    def nodesInit(self,_, line):
         lineSplit = line.split('\t',maxsplit=1)
         is_quoted_by,node = lineSplit
+        PageRank.nodesInstances[node] = {'rank':0,'AdjacencyList':set()}
+        PageRank.nodesInstances[is_quoted_by] = {'rank':0,'AdjacencyList':set()}
         yield node, is_quoted_by
 
-    # Ajouts des noeuds au dictionnaire des instances de noeuds
-    def combiner(self, node, AdjacencyList):
+    def rankInit(self, node, AdjacencyList):
         tmp = set(AdjacencyList)
-        PageRank.nodesInstances[node] = {'rank':0,'AdjacencyList':tmp}
-
-        for neighbour in tmp:
-            #certains noeuds qui sont uniquement source n'apparaissent toujours pas dans le dict
-            if neighbour not in PageRank.nodesInstances.keys():
-                PageRank.nodesInstances[neighbour] = {'rank':0,'AdjacencyList':set()}      
-
-        yield node, None
-
-    def rankInit(self, node, _):
         PageRank.nodesInstances[node]['rank'] = 1/len(PageRank.nodesInstances)
+        PageRank.nodesInstances[node]['AdjacencyList'] = tmp
+        for neighbour in tmp:
+            PageRank.nodesInstances[neighbour]['rank'] = 1/len(PageRank.nodesInstances)
         yield node, None
 
     def rankUpdate(self, node, _):
@@ -42,7 +37,7 @@ class PageRank(MRJob):
 
 
     def steps(self):
-        return [MRStep(mapper=self.mapper1,combiner=self.combiner,reducer=self.rankInit)] +\
+        return [MRStep(mapper=self.nodesInit,reducer=self.rankInit)] +\
             PageRank.nIt * [MRStep(mapper=self.rankUpdate)]
 
 if __name__ == '__main__':
