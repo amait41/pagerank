@@ -34,8 +34,8 @@ class PageRank(MRJob):
                 node = value[1]
             else:
                 contributions+=value[1]
-        
-        node['rank'] += contributions
+
+        node['rank'] = PageRank.c*node['rank'] + (1-PageRank.c)*contributions
         yield nodeId, node
     #### End of iteration ####
 
