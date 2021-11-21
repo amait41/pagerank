@@ -1,6 +1,5 @@
 from mrjob.job import MRJob
 from mrjob.step import MRStep
-import sys
 
 class PageRank(MRJob):
     c = 0.15
