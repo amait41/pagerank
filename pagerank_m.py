@@ -18,17 +18,21 @@ class PageRank(MRJob):
     # Nodes rank initialized as 1/N
     def rankInit(self, nodeId, AdjacencyList):
         node = {'rank':1/len(PageRank.nodesInstances),'AdjacencyList':list(AdjacencyList)}
+
         yield nodeId, node
 
     #### One iteration of rank update ####
     def mapper(self, nodeId, node):
         yield nodeId, ('node',node)
-        contribution = node['rank']/len(node['AdjacencyList']) # Node contribution
-        for neighbourId in node['AdjacencyList']:
-            yield neighbourId, ('contribution',contribution) # Pass contribution to neighbours
+        
+        if node['AdjacencyList']:
+            contribution = node['rank']/len(node['AdjacencyList']) # Node contribution
+            for neighbourId in node['AdjacencyList']:
+                yield neighbourId, ('contribution',contribution) # Pass contribution to neighbours
 
     def reducer(self, nodeId, values):
         contributions = 0
+        node = {'rank':1/len(PageRank.nodesInstances),'AdjacencyList':list()} # if node note created
         for value in values:
             if value[0]=='node':
                 node = value[1]
