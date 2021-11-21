@@ -24,7 +24,7 @@ class PageRank(MRJob):
     #### One iteration of rank update ####
     def mapper(self, nodeId, node):
         yield nodeId, ('node',node)
-        
+
         if node['AdjacencyList']:
             contribution = node['rank']/len(node['AdjacencyList']) # Node contribution
             for neighbourId in node['AdjacencyList']:
@@ -49,6 +49,6 @@ class PageRank(MRJob):
 
 if __name__ == '__main__':
     #./main.py file_path
-    file_path = sys.argv[1]
-    
+
+    PR = PageRank()
     PageRank.run()
