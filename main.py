@@ -53,6 +53,8 @@ if __name__=="__main__":
     net.show("visualization.html")
     print(topn)
 
+    # Doc pyvis : 
+    # https://pyvis.readthedocs.io/en/latest/tutorial.html#example-visualizing-a-game-of-thrones-character-network
 
     # got_net = Network(height='750px', width='100%', bgcolor='#222222', font_color='white')
 
