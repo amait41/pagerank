@@ -1,30 +1,37 @@
 #!/usr/bin/env python3
-import os
-import json
+import os, sys, json
 import pandas as pd
 import numpy as np
 import networkx as nx
 from pyvis.network import Network
 
-def run_PageRank(filein="soc-Epinions1.txt", fileout="results.txt"):
-    os.system(f"./PageRank.py {filein} > {fileout}")
 
-def convert_results_txt2json(fp_in="results.txt", fp_out="results.json"):
-    with open(fp_in, "r") as filein:
-        with open(fp_out, "w") as fileout:
+def run_PageRank(filein):
+    os.system(f"python PageRank.py {filein} > results.txt")
+
+def convert_results_txt2json():
+    with open('results.txt', "r") as filein:
+        with open('results.json', "w") as fileout:
             fileout.write("[")
             for line in filein:
                 fileout.write("{" + line.strip().replace("\t", ":") + "},\n")
             fileout.write('{"-1" : {"rank":0.0,"AdjacencyList":[]}}\n]')
 
 
+
 if __name__=="__main__":
+    if len(sys.argv)<2:
+        raise Exception("Missing arguments")
+    filein = sys.argv[1]
+
     if not os.path.isfile('results.txt'):
-        run_PageRank()
-    
+        run_PageRank(filein)
     if not os.path.isfile('results.json'):
         convert_results_txt2json()
     
+
+    ### Visualisation ###
+
     id = []
     pagerank = []
     redirect_list = []
@@ -36,6 +43,7 @@ if __name__=="__main__":
             redirect_list.append(list(elm.values())[0]["AdjacencyList"])
     sites = pd.DataFrame({"id":id, "pagerank":pagerank, "redirect_list":redirect_list})
     
+    
     source = []
     target = []
     with open("soc-Epinions1.txt", "r") as f:
@@ -44,7 +52,7 @@ if __name__=="__main__":
             source.append(int(line[0]))
             target.append(int(line[1]))
     df = pd.DataFrame({"source":source, "target":target})
-    
+
     n = 5
     topn = sites[["id", "pagerank"]].sort_values(by="pagerank", ascending=False)[:n]
     print(topn)

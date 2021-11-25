@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-
 from mrjob.job import MRJob
 from mrjob.step import MRStep
 
 class PageRank(MRJob):
     c = 0.15
-    nIt = 1
+    nIt = 5
     nodesInstances = set()
 
     # Data extraction from the file
@@ -32,7 +31,7 @@ class PageRank(MRJob):
     # Reduce and update pagerank
     def reducer(self, nodeId, values):
         contributions = 0
-        node = {'rank':1/len(PageRank.nodesInstances),'AdjacencyList':list()} # if node note created
+        node = {'rank':1/len(PageRank.nodesInstances),'AdjacencyList':list()} # if node note created in rankInit
         for value in values:
             if value[0]=='node':
                 node = value[1]
