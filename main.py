@@ -2,6 +2,7 @@
 import os
 import json
 import pandas as pd
+import numpy as np
 import networkx as nx
 from pyvis.network import Network
 
@@ -46,42 +47,38 @@ if __name__=="__main__":
     
     n = 5
     topn = sites[["id", "pagerank"]].sort_values(by="pagerank", ascending=False)[:n]
-    df = df[df.source.isin(topn.id)]
-    G = nx.from_pandas_edgelist(df, source='source', target="target")
-    net = Network(notebook=False)
-    net.from_nx(G)
-    net.show("visualization.html")
     print(topn)
+    df = df[df.source.isin(topn.id)].astype(str)
+    # G = nx.from_pandas_edgelist(df, source='source', target="target")
+    # net = Network(notebook=False)
+    # net.from_nx(G)
+    # net.show("visualization.html")
+    # print(topn)
 
-    # Doc pyvis : 
-    # https://pyvis.readthedocs.io/en/latest/tutorial.html#example-visualizing-a-game-of-thrones-character-network
+    network = Network(height='1000px', width='100%', bgcolor='#222222', font_color='white')
+    network.barnes_hut()
 
-    # got_net = Network(height='750px', width='100%', bgcolor='#222222', font_color='white')
+    sources = df.source
+    targets = df.target
+    weights = np.ones(len(df))
 
-    # # set the physics layout of the network
-    # got_net.barnes_hut()
-    # got_data = pd.read_csv('https://www.macalester.edu/~abeverid/data/stormofswords.csv')
+    edge_data = zip(sources, targets, weights)
 
-    # sources = got_data['Source']
-    # targets = got_data['Target']
-    # weights = got_data['Weight']
+    for e in edge_data:
+        src = e[0]
+        dst = e[1]
+        w = e[2]
 
-    # edge_data = zip(sources, targets, weights)
+        network.add_node(src, src, title=src)
+        network.add_node(dst, dst, title=dst)
+        network.add_edge(src, dst, value=w)
 
-    # for e in edge_data:
-    #     src = e[0]
-    #     dst = e[1]
-    #     w = e[2]
+    neighbor_map = network.get_adj_list()
 
-    #     got_net.add_node(src, src, title=src)
-    #     got_net.add_node(dst, dst, title=dst)
-    #     got_net.add_edge(src, dst, value=w)
+    # add neighbor data to node hover data
+    for node in network.nodes:
+        # node['title'] += ' Neighbors:<br>' + '<br>'.join(neighbor_map[node['id']])
+        node['value'] = len(neighbor_map[node['id']]) * 100
 
-    # neighbor_map = got_net.get_adj_list()
-
-    # # add neighbor data to node hover data
-    # for node in got_net.nodes:
-    #     node['title'] += ' Neighbors:<br>' + '<br>'.join(neighbor_map[node['id']])
-    #     node['value'] = len(neighbor_map[node['id']])
-
-    # got_net.show('gameofthrones.html')
+    network.show_buttons(filter_=['physics'])
+    network.show('network.html')
