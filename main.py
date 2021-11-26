@@ -7,11 +7,11 @@ from pyvis.network import Network
 
 
 def run_PageRank(filein):
-    os.system(f"python PageRank.py {filein} > results.txt")
+    os.system(f"python PageRank.py {filein} > {os.path.join('output','results.txt')}")
 
 def convert_results_txt2json():
-    with open('results.txt', "r") as filein:
-        with open('results.json', "w") as fileout:
+    with open(os.path.join('output','results.txt'), "r") as filein:
+        with open(os.path.join('output','results.json'), "w") as fileout:
             fileout.write("[")
             for line in filein:
                 fileout.write("{" + line.strip().replace("\t", ":") + "},\n")
@@ -23,10 +23,12 @@ if __name__=="__main__":
     if len(sys.argv)<2:
         raise Exception("Missing arguments")
     filein = sys.argv[1]
-
-    if not os.path.isfile('results.txt'):
+    
+    os.makedirs('output', exist_ok = True)
+    if not os.path.isfile(os.path.join('output','results.txt')):
+        print('run')
         run_PageRank(filein)
-    if not os.path.isfile('results.json'):
+    if not os.path.isfile(os.path.join('output','results.json')):
         convert_results_txt2json()
     
 
@@ -35,7 +37,7 @@ if __name__=="__main__":
     id = []
     pagerank = []
     redirect_list = []
-    with open("results.json", "r") as f:
+    with open(os.path.join('output','results.json'), "r") as f:
         results = json.load(f)
         for elm in results:
             id.append(int(list(elm.keys())[0]))
@@ -55,7 +57,7 @@ if __name__=="__main__":
 
     n = 5
     topn = sites[["id", "pagerank"]].sort_values(by="pagerank", ascending=False)[:n]
-    print(topn)
+    print(f"\nTop {n} nodes : \n\n", topn)
     df = df[df.source.isin(topn.id)].astype(str)
     # G = nx.from_pandas_edgelist(df, source='source', target="target")
     # net = Network(notebook=False)
@@ -89,4 +91,4 @@ if __name__=="__main__":
         node['value'] = len(neighbor_map[node['id']]) * 100
 
     network.show_buttons(filter_=['physics'])
-    network.show('network.html')
+    network.show(os.path.join('output','network.html'))
