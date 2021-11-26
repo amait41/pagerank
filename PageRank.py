@@ -4,7 +4,7 @@ from mrjob.step import MRStep
 
 class PageRank(MRJob):
     c = 0.15
-    nIt = 5
+    nIt = 10
     nodesInstances = set()
 
     # Data extraction from the file
