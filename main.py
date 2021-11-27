@@ -98,7 +98,7 @@ if __name__=="__main__":
     # Get top n
     rank = get_rank_df()
     net = get_net_df()
-    net_topn = get_topn_df(rank, net, 10)
+    net_topn = get_topn_df(rank, net, 5)
 
     # Visualization
     visualization(net_topn)
