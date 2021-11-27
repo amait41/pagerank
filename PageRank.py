@@ -9,7 +9,7 @@ class PageRank(MRJob):
 
     # Data extraction from the file
     def nodeInit(self,_, line):
-        lineSplit = line.split('\t',maxsplit=1)
+        lineSplit = line.split('\t', maxsplit=1)
         nodeFrom, nodeTo = lineSplit
         PageRank.nodesInstances.add(nodeFrom)
         PageRank.nodesInstances.add(nodeTo)
@@ -17,27 +17,30 @@ class PageRank(MRJob):
 
     # Nodes rank initialized as 1/N
     def rankInit(self, nodeId, AdjacencyList):
-        node = {'rank':1/len(PageRank.nodesInstances),'AdjacencyList':list(AdjacencyList)}
+        node = {'rank' : 1/len(PageRank.nodesInstances), 'AdjacencyList' : list(AdjacencyList)}
         yield nodeId, node
 
     # Map contribution 
     def mapper(self, nodeId, node):
         yield nodeId, ('node',node)
         if node['AdjacencyList']:
-            contribution = node['rank']/len(node['AdjacencyList']) # Node contribution
+            # Node contribution
+            contribution = node['rank']/len(node['AdjacencyList'])
             for neighbourId in node['AdjacencyList']:
-                yield neighbourId, ('contribution',contribution) # Pass contribution to neighbours
+                # Send contribution to neighbours
+                yield neighbourId, ('contribution',contribution)
 
     # Reduce and update pagerank
     def reducer(self, nodeId, values):
         contributions = 0
-        node = {'rank':1/len(PageRank.nodesInstances),'AdjacencyList':list()} # if node note created in rankInit
-        for value in values:
+        # Init node if it's not created in rankInit
+        node = {'rank' : 1/len(PageRank.nodesInstances), 'AdjacencyList' : list()}
+        for value in values: 
             if value[0]=='node':
                 node = value[1]
             else:
                 contributions+=value[1]
-        node['rank'] = PageRank.c*node['rank'] + (1-PageRank.c)*contributions
+        node['rank'] = PageRank.c * node['rank'] + (1-PageRank.c) * contributions
         yield nodeId, node
 
     def steps(self):
